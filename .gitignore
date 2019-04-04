@@ -1,0 +1,4 @@
+venv
+**/__pychache__
+tenma/__pychache__/
+tests/__pychache__/
