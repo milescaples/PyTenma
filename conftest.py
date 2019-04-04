@@ -1,6 +1,7 @@
 import pytest
 from tenma.powersupply import PowerSupply
 
+
 @pytest.fixture(scope="module")
 def ps():
     PS = PowerSupply("COM3")
