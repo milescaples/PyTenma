@@ -7,6 +7,15 @@ class PowerSupply():
     def __init__(self, comport):
         self.ser = serial.Serial(comport, 9600)
 
+        if not self.getIdentification().startswith("TENMA"):
+            self.ser.close()
+            raise Exception("Device on " + comport + " not compatible")
+
+        self.setVoltage(0)
+        self.set_voltage = self.checkSetVoltage()
+        self.setCurrent(0)
+        self.set_current = self.checkSetCurrent()
+
     def close(self):
         self.ser.close()
 
