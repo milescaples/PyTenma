@@ -15,6 +15,7 @@ class PowerSupply():
         self.set_voltage = self.checkSetVoltage()
         self.setCurrent(0)
         self.set_current = self.checkSetCurrent()
+        self.setOutput(False)
 
     def close(self):
         self.ser.close()
