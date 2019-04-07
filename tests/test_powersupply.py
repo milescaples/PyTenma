@@ -37,3 +37,6 @@ class Test_PowerSupply(object):
     def test_turn_off(self, ps):
         ps.setOutput(False)
         assert check_output_bit(ord(ps.status())) == False
+    
+    def test_check_webhook(self):
+        assert 1 == 1
