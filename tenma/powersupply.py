@@ -61,10 +61,6 @@ class PowerSupply():
 
     def on(self):
         self.execute('OUT1')
-        while(self.get_voltage() != self.get_set_voltage()
-            and self.get_current() != self.get_set_current()):
-            time.sleep(0.1)
-            print("waiting...")
 
 
     def off(self):
