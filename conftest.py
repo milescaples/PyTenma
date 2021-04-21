@@ -2,10 +2,15 @@ import pytest
 from tenma.powersupply import PowerSupply
 
 
-@pytest.fixture(scope="module")
-def ps():
+def pytest_addoption(parser):
+    parser.addoption('--port', help='serial port of the power supply')
+
+
+@pytest.fixture(scope="session")
+def ps(request):
     try:
-        PS = PowerSupply("COM3")
+        port = request.config.getoption('--port')
+        PS = PowerSupply(port)
         yield PS
         PS.close()
     except Exception as ex:

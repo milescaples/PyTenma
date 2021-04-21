@@ -1,67 +1,96 @@
 import time
 import serial
-from decimal import Decimal
 
 
 class PowerSupply():
     def __init__(self, comport):
         self.ser = serial.Serial(comport, 9600)
+        assert self.get_identification() is not None
+        self.set_output(0.0, 0.0)
+        self.off()
 
-        if not self.getIdentification().startswith("TENMA"):
-            self.ser.close()
-            raise Exception("Device on " + comport + " not compatible")
-
-        self.setVoltage(0)
-        self.set_voltage = self.checkSetVoltage()
-        self.setCurrent(0)
-        self.set_current = self.checkSetCurrent()
-        self.setOutput(False)
 
     def close(self):
         self.ser.close()
 
-    def com(self, command):
+
+    def execute(self, command):
         self.ser.write(command.encode('utf-8'))
         time.sleep(0.1)
         if command.endswith('?'):
-            reply = self.ser.read(self.ser.inWaiting())
-            return reply
+            response = self.ser.read(self.ser.inWaiting())
+            return response
 
-    def getIdentification(self):
-        return self.com('*IDN?').decode('utf-8')
 
-    def status(self):
-        return self.com('STATUS?')
+    def get_identification(self):
+        return self.execute('*IDN?').decode('utf-8')
 
-    def setVoltage(self, voltage):
-        return self.com('VSET1:{:.2f}'.format(voltage))
 
-    def checkSetVoltage(self):
-        return Decimal(self.com('VSET1?').decode('utf-8'))
+    def get_status(self):
+        return self.execute('STATUS?')
 
-    def getVoltage(self):
-        return Decimal(self.com('VOUT1?').decode('utf-8'))
 
-    def setCurrent(self, current):
-        return self.com('ISET1:{:.3f}'.format(current))
+    def set_voltage(self, voltage):
+        self.execute('VSET1:{:.2f}'.format(voltage))
 
-    def checkSetCurrent(self):
-        return Decimal(self.com('ISET1?').decode('utf-8'))
 
-    def getCurrent(self):
-        return Decimal(self.com('IOUT1?').decode('utf-8'))
+    def get_set_voltage(self):
+        return float(self.execute('VSET1?').decode('utf-8'))
 
-    def setOutput(self, boolean):
-        return self.com('OUT' + ('1' if boolean else '0'))
 
-    def setOvercurrentProtection(self, boolean):
-        return self.com('OCP' + ('1' if boolean else '0'))
+    def get_voltage(self):
+        return float(self.execute('VOUT1?').decode('utf-8'))
 
-    def setOvervoltageProtection(self, boolean):
-        return self.com('OVP' + ('1' if boolean else '0'))
 
-    def recallPanelSetting(self, integer):
-        return self.com('RCL{:d}'.format(integer))
+    def set_current(self, current):
+        self.execute('ISET1:{:.3f}'.format(current))
 
-    def storePanelSetting(self, integer):
-        return self.com('SAV{:d}'.format(integer))
+
+    def get_set_current(self):
+        return float(self.execute('ISET1?').decode('utf-8').strip('K'))
+
+
+    def get_current(self):
+        return float(self.execute('IOUT1?').decode('utf-8'))
+
+
+    def set_output(self, voltage, current):
+        self.set_voltage(voltage)
+        self.set_current(current)
+
+
+    def on(self):
+        self.execute('OUT1')
+        while(self.get_voltage() != self.get_set_voltage()
+            and self.get_current() != self.get_set_current()):
+            time.sleep(0.1)
+            print("waiting...")
+
+
+    def off(self):
+        self.execute('OUT0')
+
+    
+    def set_overcurrent_protection(self, boolean):
+        self.execute('OCP' + ('1' if boolean else '0'))
+
+
+    def set_overvoltage_protection(self, boolean):
+        self.execute('OVP' + ('1' if boolean else '0'))
+
+
+    def store_panel_setting(self, integer):
+        if integer in range(1,5):
+            self.execute('SAV{:d}'.format(integer))
+            return self.get_set_voltage(), self.get_set_current()
+        else:
+            raise Exception("integer out of bounds")
+
+
+    def recall_panel_setting(self, integer):
+        if integer in range(1,5):
+            self.execute('RCL{:d}'.format(integer))
+            return self.get_set_voltage(), self.get_set_current()
+        else:
+            raise Exception("integer out of bounds")
+        
